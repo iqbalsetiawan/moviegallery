@@ -7,6 +7,7 @@ import { id } from "date-fns/locale";
 import {
   Grid,
   Typography,
+  TextField,
   Modal,
   Button,
   Card,
@@ -17,12 +18,14 @@ import {
   DialogTitle,
   DialogActions,
   DialogContent,
+  IconButton,
 } from "@material-ui/core";
-import { Favorite, Schedule, Close } from "@material-ui/icons";
+import { Autocomplete } from "@material-ui/lab";
+import { Favorite, Schedule, Close, Search } from "@material-ui/icons";
 
 const styled = withStyles((theme) => ({
   container: {
-    padding: "50px 30px 0 30px",
+    padding: 20,
   },
   root: {
     width: "75%",
@@ -79,6 +82,7 @@ class Movie extends React.Component {
       openDetail: false,
       idSelected: "",
       selectedMovie: {},
+      searchInputData: "",
     };
   }
 
@@ -117,9 +121,28 @@ class Movie extends React.Component {
     this.setState({ openDetail: false, idSelected: "", selectedMovie: {} });
   };
 
+  handleFilter = () => {
+    const { moviesData, searchInputData } = this.state;
+    if (searchInputData === "") {
+      this.fetchMovies();
+      return;
+    }
+    const filteredData = moviesData.filter(
+      (dt) => dt.title === searchInputData
+    );
+    this.setState({
+      moviesData: filteredData,
+    });
+  };
+
   render() {
     const { classes } = this.props;
-    const { openDetail, moviesData, selectedMovie } = this.state;
+    const {
+      openDetail,
+      moviesData,
+      selectedMovie,
+      searchInputData,
+    } = this.state;
     return (
       <div className={classes.container}>
         {openDetail && (
@@ -190,6 +213,37 @@ class Movie extends React.Component {
             </div>
           </Modal>
         )}
+        <Grid container item xs={12}>
+          <Grid item xs={6} style={{ padding: "0px 20px 20px" }}>
+            <Typography variant="h2" color="primary">
+              Filter:
+            </Typography>
+            <div style={{ display: "flex" }}>
+              <Autocomplete
+                freeSolo
+                style={{ width: 500 }}
+                disableClearable
+                options={moviesData.map((option) => option.title)}
+                inputValue={searchInputData}
+                onInputChange={(event, newInputValue) => {
+                  this.setState({ searchInputData: newInputValue });
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Choose a movie"
+                    margin="normal"
+                    variant="outlined"
+                    InputProps={{ ...params.InputProps, type: "search" }}
+                  />
+                )}
+              />
+              <IconButton onClick={this.handleFilter}>
+                <Search />
+              </IconButton>
+            </div>
+          </Grid>
+        </Grid>
         <Grid container item xs={12}>
           {moviesData.map(($item) => (
             <Grid key={$item.id} container item xs={4} justify="center">
