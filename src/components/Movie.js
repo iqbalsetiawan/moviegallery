@@ -1,8 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
 
 import {
   Grid,
@@ -22,6 +20,10 @@ import {
 } from "@material-ui/core";
 import { Autocomplete } from "@material-ui/lab";
 import { Favorite, Schedule, Close, Search } from "@material-ui/icons";
+
+import DatePicker from "react-date-picker";
+
+import { dateWithSec } from "../utils/date";
 
 const styled = withStyles((theme) => ({
   container: {
@@ -82,7 +84,8 @@ class Movie extends React.Component {
       openDetail: false,
       idSelected: "",
       selectedMovie: {},
-      searchInputData: "",
+      searchData: "",
+      searchDate: null,
     };
   }
 
@@ -121,15 +124,36 @@ class Movie extends React.Component {
     this.setState({ openDetail: false, idSelected: "", selectedMovie: {} });
   };
 
+  handleChangeDate = (date) => {
+    const { moviesData } = this.state;
+    this.setState(
+      {
+        searchDate: date,
+      },
+      () => {
+        if (date === null) {
+          this.fetchMovies();
+          return;
+        }
+        const filteredData = moviesData.filter(
+          (dt) =>
+            new Date(dt.showTime).toLocaleDateString() ===
+            new Date(date).toLocaleDateString()
+        );
+        this.setState({
+          moviesData: filteredData,
+        });
+      }
+    );
+  };
+
   handleFilter = () => {
-    const { moviesData, searchInputData } = this.state;
-    if (searchInputData === "") {
+    const { moviesData, searchData } = this.state;
+    if (searchData === "") {
       this.fetchMovies();
       return;
     }
-    const filteredData = moviesData.filter(
-      (dt) => dt.title === searchInputData
-    );
+    const filteredData = moviesData.filter((dt) => dt.title === searchData);
     this.setState({
       moviesData: filteredData,
     });
@@ -141,7 +165,8 @@ class Movie extends React.Component {
       openDetail,
       moviesData,
       selectedMovie,
-      searchInputData,
+      searchData,
+      searchDate,
     } = this.state;
     return (
       <div className={classes.container}>
@@ -190,11 +215,7 @@ class Movie extends React.Component {
                         <Typography variant="h5" className={classes.time}>
                           <Schedule />
                           <Typography variant="body1" className={classes.time1}>
-                            {format(
-                              new Date(selectedMovie.showTime),
-                              "dd/MM/yyyy (HH:mm)",
-                              { locale: id }
-                            )}
+                            {dateWithSec(selectedMovie.showTime)}
                           </Typography>
                         </Typography>
                       </Grid>
@@ -216,7 +237,7 @@ class Movie extends React.Component {
         <Grid container item xs={12}>
           <Grid item xs={6} style={{ padding: "0px 20px 20px" }}>
             <Typography variant="h2" color="primary">
-              Filter:
+              Search:
             </Typography>
             <div style={{ display: "flex" }}>
               <Autocomplete
@@ -224,9 +245,9 @@ class Movie extends React.Component {
                 style={{ width: 500 }}
                 disableClearable
                 options={moviesData.map((option) => option.title)}
-                inputValue={searchInputData}
+                inputValue={searchData}
                 onInputChange={(event, newInputValue) => {
-                  this.setState({ searchInputData: newInputValue });
+                  this.setState({ searchData: newInputValue });
                 }}
                 renderInput={(params) => (
                   <TextField
@@ -241,6 +262,14 @@ class Movie extends React.Component {
               <IconButton onClick={this.handleFilter}>
                 <Search />
               </IconButton>
+            </div>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="h2" color="primary">
+              Filter:
+            </Typography>
+            <div style={{ paddingTop: 15 }}>
+              <DatePicker onChange={this.handleChangeDate} value={searchDate} />
             </div>
           </Grid>
         </Grid>
@@ -261,11 +290,7 @@ class Movie extends React.Component {
                     <div className={classes.time}>
                       <Schedule />
                       <Typography variant="body1" className={classes.time1}>
-                        {format(
-                          new Date($item.showTime),
-                          "dd/MM/yyyy (HH:mm)",
-                          { locale: id }
-                        )}
+                        {dateWithSec($item.showTime)}
                       </Typography>
                     </div>
                     <div className={classes.like}>
