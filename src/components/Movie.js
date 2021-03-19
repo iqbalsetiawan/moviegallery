@@ -17,6 +17,7 @@ import {
   DialogActions,
   DialogContent,
   IconButton,
+  TablePagination,
 } from "@material-ui/core";
 import { Autocomplete } from "@material-ui/lab";
 import { Favorite, Schedule, Close, Search } from "@material-ui/icons";
@@ -76,6 +77,12 @@ const styled = withStyles((theme) => ({
     color: "#0971b5",
     marginBottom: theme.spacing(2),
   },
+  button: {
+    "&:hover": {
+      backgroundColor: "#0A70C7",
+      color: "white",
+    },
+  },
 }));
 
 class Movie extends React.Component {
@@ -89,6 +96,8 @@ class Movie extends React.Component {
       searchData: "",
       searchDate: null,
       isFetching: false,
+      page: 0,
+      rowsPerPage: 25,
     };
   }
 
@@ -165,6 +174,15 @@ class Movie extends React.Component {
     });
   };
 
+  handleChangePage = (event, page) => {
+    this.setState({ page });
+    window.scrollTo(0, 0);
+  };
+
+  handleChangeRowsPerPage = (event) => {
+    this.setState({ rowsPerPage: event.target.value, page: 0 });
+  };
+
   render() {
     const { classes } = this.props;
     const {
@@ -174,6 +192,8 @@ class Movie extends React.Component {
       searchData,
       searchDate,
       isFetching,
+      page,
+      rowsPerPage,
     } = this.state;
     return (
       <div className={classes.container}>
@@ -188,9 +208,12 @@ class Movie extends React.Component {
             <div className={classes.paper}>
               <DialogTitle className={classes.title} id="alert-dialog-title">
                 <DialogActions>
-                  <Button onClick={this.onClose}>
-                    <Close />
-                  </Button>
+                  <IconButton
+                    style={{ backgroundColor: "red", width: 32, height: 32 }}
+                    onClick={this.onClose}
+                  >
+                    <Close style={{ color: "white" }} />
+                  </IconButton>
                 </DialogActions>
                 <div className={classes.dialogTitle}>Movie Detail</div>
               </DialogTitle>
@@ -200,7 +223,7 @@ class Movie extends React.Component {
                     <img
                       style={{ width: "85%" }}
                       src={selectedMovie.image}
-                      alt="mahkota"
+                      alt="movie"
                     />
                   </Grid>
                   <Grid item xs={6}>
@@ -246,7 +269,11 @@ class Movie extends React.Component {
             <Typography variant="h2" color="primary">
               Search:
             </Typography>
-            <div style={{ display: "flex" }}>
+            <div
+              style={{
+                display: "flex",
+              }}
+            >
               <Autocomplete
                 freeSolo
                 style={{ width: 500 }}
@@ -286,46 +313,62 @@ class Movie extends React.Component {
               <img src={NotFound} alt="Not Found" />
             </Grid>
           ) : (
-            moviesData.map(($item) => (
-              <Grid key={$item.id} container item xs={4} justify="center">
-                <Card className={classes.root}>
-                  <CardActionArea>
-                    <img
-                      style={{ width: "inherit" }}
-                      src={$item.image}
-                      alt="mahkota"
-                    />
-                    <CardContent>
-                      <Typography gutterBottom variant="h5" component="h2">
-                        {$item.title}
-                      </Typography>
-                      <div className={classes.time}>
-                        <Schedule />
-                        <Typography variant="body1" className={classes.time1}>
-                          {dateWithSec($item.showTime)}
+            moviesData
+              .slice(page * rowsPerPage, (page * rowsPerPage) + rowsPerPage)
+              .map(($item) => (
+                <Grid key={$item.id} container item xs={4} justify="center">
+                  <Card className={classes.root}>
+                    <CardActionArea>
+                      <img
+                        style={{ width: "inherit" }}
+                        src={$item.image}
+                        alt="movie"
+                      />
+                      <CardContent>
+                        <Typography gutterBottom variant="h5" component="h2">
+                          {$item.title}
                         </Typography>
-                      </div>
-                      <div className={classes.like}>
-                        <Favorite color="secondary" />
-                        <Typography variant="body1" className={classes.time1}>
-                          {$item.like}
-                        </Typography>
-                      </div>
-                    </CardContent>
-                  </CardActionArea>
-                  <CardActions>
-                    <Button
-                      onClick={() => this.fetchMovieDetail($item)}
-                      color="primary"
-                      variant="contained"
-                    >
-                      Detail
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))
+                        <div className={classes.time}>
+                          <Schedule />
+                          <Typography variant="body1" className={classes.time1}>
+                            {dateWithSec($item.showTime)}
+                          </Typography>
+                        </div>
+                        <div className={classes.like}>
+                          <Favorite color="secondary" />
+                          <Typography variant="body1" className={classes.time1}>
+                            {$item.like}
+                          </Typography>
+                        </div>
+                      </CardContent>
+                    </CardActionArea>
+                    <CardActions>
+                      <Button
+                        onClick={() => this.fetchMovieDetail($item)}
+                        color="primary"
+                        variant="outlined"
+                        className={classes.button}
+                      >
+                        Detail
+                      </Button>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              ))
           )}
+          <Grid item xs={12} container justify="center">
+            {!isFetching && (
+              <TablePagination
+                component="div"
+                count={moviesData.length}
+                page={page}
+                rowsPerPageOptions={[25, 50]}
+                onChangePage={this.handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onChangeRowsPerPage={this.handleChangeRowsPerPage}
+              />
+            )}
+          </Grid>
         </Grid>
       </div>
     );
