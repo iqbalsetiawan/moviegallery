@@ -25,6 +25,8 @@ import DatePicker from "react-date-picker";
 
 import { dateWithSec } from "../utils/date";
 
+import NotFound from "../assets/NotFound.png";
+
 const styled = withStyles((theme) => ({
   container: {
     padding: 20,
@@ -86,6 +88,7 @@ class Movie extends React.Component {
       selectedMovie: {},
       searchData: "",
       searchDate: null,
+      isFetching: false,
     };
   }
 
@@ -94,15 +97,18 @@ class Movie extends React.Component {
   }
 
   fetchMovies = () => {
+    this.setState({ isFetching: true });
     axios
       .get("https://5f50ca542b5a260016e8bfb0.mockapi.io/api/v1/movies")
       .then((res) => {
         this.setState({
           moviesData: res.data,
+          isFetching: false,
         });
       })
       .catch((error) => {
         console.error(error);
+        this.setState({ isFetching: false });
       });
   };
 
@@ -167,6 +173,7 @@ class Movie extends React.Component {
       selectedMovie,
       searchData,
       searchDate,
+      isFetching,
     } = this.state;
     return (
       <div className={classes.container}>
@@ -274,45 +281,51 @@ class Movie extends React.Component {
           </Grid>
         </Grid>
         <Grid container item xs={12}>
-          {moviesData.map(($item) => (
-            <Grid key={$item.id} container item xs={4} justify="center">
-              <Card className={classes.root}>
-                <CardActionArea>
-                  <img
-                    style={{ width: "inherit" }}
-                    src={$item.image}
-                    alt="mahkota"
-                  />
-                  <CardContent>
-                    <Typography gutterBottom variant="h5" component="h2">
-                      {$item.title}
-                    </Typography>
-                    <div className={classes.time}>
-                      <Schedule />
-                      <Typography variant="body1" className={classes.time1}>
-                        {dateWithSec($item.showTime)}
-                      </Typography>
-                    </div>
-                    <div className={classes.like}>
-                      <Favorite color="secondary" />
-                      <Typography variant="body1" className={classes.time1}>
-                        {$item.like}
-                      </Typography>
-                    </div>
-                  </CardContent>
-                </CardActionArea>
-                <CardActions>
-                  <Button
-                    onClick={() => this.fetchMovieDetail($item)}
-                    color="primary"
-                    variant="contained"
-                  >
-                    Detail
-                  </Button>
-                </CardActions>
-              </Card>
+          {!isFetching && moviesData.length === 0 ? (
+            <Grid item xs={12} container justify="center">
+              <img src={NotFound} alt="Not Found" />
             </Grid>
-          ))}
+          ) : (
+            moviesData.map(($item) => (
+              <Grid key={$item.id} container item xs={4} justify="center">
+                <Card className={classes.root}>
+                  <CardActionArea>
+                    <img
+                      style={{ width: "inherit" }}
+                      src={$item.image}
+                      alt="mahkota"
+                    />
+                    <CardContent>
+                      <Typography gutterBottom variant="h5" component="h2">
+                        {$item.title}
+                      </Typography>
+                      <div className={classes.time}>
+                        <Schedule />
+                        <Typography variant="body1" className={classes.time1}>
+                          {dateWithSec($item.showTime)}
+                        </Typography>
+                      </div>
+                      <div className={classes.like}>
+                        <Favorite color="secondary" />
+                        <Typography variant="body1" className={classes.time1}>
+                          {$item.like}
+                        </Typography>
+                      </div>
+                    </CardContent>
+                  </CardActionArea>
+                  <CardActions>
+                    <Button
+                      onClick={() => this.fetchMovieDetail($item)}
+                      color="primary"
+                      variant="contained"
+                    >
+                      Detail
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))
+          )}
         </Grid>
       </div>
     );
